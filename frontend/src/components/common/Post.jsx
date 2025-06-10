@@ -9,6 +9,9 @@ import { Link } from "react-router-dom";
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
 	const postOwner = post.user;
+	const comments = post.comments || [];
+	const likes = post.likes || [];
+
 	const isLiked = false;
 
 	const isMyPost = true;
@@ -67,7 +70,8 @@ const Post = ({ post }) => {
 							>
 								<FaRegComment className='w-4 h-4  text-slate-500 group-hover:text-sky-400' />
 								<span className='text-sm text-slate-500 group-hover:text-sky-400'>
-									{post.comments.length}
+								{post.comments?.length || 0}
+
 								</span>
 							</div>
 							{/* We're using Modal Component from DaisyUI */}
@@ -75,12 +79,12 @@ const Post = ({ post }) => {
 								<div className='modal-box rounded border border-gray-600'>
 									<h3 className='font-bold text-lg mb-4'>COMMENTS</h3>
 									<div className='flex flex-col gap-3 max-h-60 overflow-auto'>
-										{post.comments.length === 0 && (
-											<p className='text-sm text-slate-500'>
-												No comments yet 🤔 Be the first one 😉
+									{(post.comments?.length || 0) === 0 && (
+									<p className='text-sm text-slate-500'>
+										No comments yet 🤔 Be the first one 😉
 											</p>
 										)}
-										{post.comments.map((comment) => (
+										{(post.comments || []).map((comment) => (
 											<div key={comment._id} className='flex gap-2 items-start'>
 												<div className='avatar'>
 													<div className='w-8 rounded-full'>
@@ -139,7 +143,8 @@ const Post = ({ post }) => {
 										isLiked ? "text-pink-500" : ""
 									}`}
 								>
-									{post.likes.length}
+									{post.likes?.length || 0}
+
 								</span>
 							</div>
 						</div>
