@@ -35,15 +35,19 @@ const SignUpPage = () => {
           }),
         });
 
-        // if (!res.ok) throw new Error("Something went wrong");
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Something went wrong"); 
         console.log("Signup response data:", data);
-        if (data.error) throw new Error(data.error);
+        // if (data.error) throw new Error(data.error);
       } catch (error) {
-        toast.error(error.message);
+        // toast.error(error.message);
+        throw error;
         throw error;
       }
     },
+    onSuccess:()=>{
+      toast.success("Account created successfully");
+    }
   });
 
   const handleSubmit = (e) => {
