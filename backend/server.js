@@ -21,8 +21,11 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+
+app.use(express.json({ limit: '10mb' })); // default is 100kb
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+
 app.use(cookieParser());
 app.use(cors({
   origin:"http://localhost:4000", // Update with your frontend URL

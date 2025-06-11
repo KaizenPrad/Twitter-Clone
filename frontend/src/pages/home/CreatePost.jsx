@@ -12,7 +12,7 @@ const CreatePost = () => {
 	const {data:authUser} = useQuery({queryKey: ['authUser'], queryFn:()=>fetch("/api/auth/me").then(res=>res.json())} ); 
 	const queryClient = useQueryClient();
 
-	const {mutate:createPost, isPending, error}=useMutation({
+	const {mutate:createPost, isPending, isError, error}=useMutation({
 		mutationFn: async ({text, img}) => {
 			try {
 				const res = await fetch("/api/posts/create",{
@@ -40,21 +40,18 @@ const CreatePost = () => {
 		}
 })
 
-
-
-	
-
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		createPost({text, img});
-	};
+		createPost({ text, img });
+		// console.log(file.size / 1024, "KB"); // Double-check file size in frontend
 
+	};
 	const handleImgChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
 			const reader = new FileReader();
 			reader.onload = () => {
-				setImg(reader.result);
+				setImg(reader.result); // for preview only
 			};
 			reader.readAsDataURL(file);
 		}
@@ -100,7 +97,7 @@ const CreatePost = () => {
 						{isPending ? "Posting..." : "Post"}
 					</button>
 				</div>
-				{error.message}
+				
 			</form>
 		</div>
 	);
