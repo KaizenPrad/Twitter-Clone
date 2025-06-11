@@ -62,30 +62,38 @@ export const deletePost = async (req, res) => {
     }
 }
 
-export const commentOnPost = async (req, res) =>{
-   try {
-    
-        const {text} = req.body;  
-       const postId = req.params.id;
-       const userId = req.user._id;
-       
-       if(!text){
-           return res.status(400).json({error:"Comment cannot be empty"});
-        }
-        const post = await Post.findById(postId);
-        if(!post){
-            return res.status(404).json({error:"Post not found"});
-        }
-        const comment = {user: userId, text};
-        post.comment.push(comment);
-        await post.save();
-        res.status(200).json(post); 
+export const commentOnPost = async (req, res) => {
+    try {
+      const { text } = req.body;
+      const postId = req.params.id;
+      const userId = req.user._id;
+  
+      if (!text) {
+        return res.status(400).json({ error: "Comment cannot be empty" });
+      }
+  
+      const post = await Post.findById(postId);
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+  
+      const comment = { user: userId, text };
+      post.comment.push(comment);
+      await post.save();
+  
+      // Populate the user inside each comment
+      const updatedPost = await Post.findById(postId).populate({
+        path: "comment.user",
+        select: "fullName username profileImg",
+      });
+  
+      res.status(200).json(updatedPost.comment); // return only updated comment array
     } catch (error) {
-     console.log("Error in commentOnPost controller", error.message);
-        res.status(500).json({error:"Internal Server Error"});
+      console.log("Error in commentOnPost controller", error.message);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-
-}
+  };
+  
 
 export const likeUnlikePost = async(req,res)=>{
         try {
