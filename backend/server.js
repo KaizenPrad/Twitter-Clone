@@ -20,7 +20,7 @@ import cors from "cors";
 
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
 
@@ -30,10 +30,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(cookieParser());
 app.use(cors({
-  origin:"http://localhost:4000", // Update with your frontend URL
+  origin:"http://localhost:3000", // Update with your frontend URL
 }
 ))
-
+//
 app.get("/",(req,res)=>{
   res.send("Hello form Server");
 })
