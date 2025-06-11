@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(cookieParser());
 app.use(cors({
-  origin:"http://localhost:3000", // Update with your frontend URL
+  origin: process.env.CLIENT_URL || "http://localhost:3000"// Update with your frontend URL
 }
 ))
 //
