@@ -2,16 +2,18 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { apiFetch } from "../../../lib/api";
 import XSvg from "../../../components/svgs/X";
-
+import { useNavigate } from "react-router-dom";
 import { MdOutlineMail } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
 
 const SignUpPage = () => {
+  const navigate = useNavigate(); 
+const queryClient = useQueryClient(); // ✅ Initialize query client
   const [formData, setFormData] = useState({
     email: "",
     username: "",
@@ -47,6 +49,8 @@ const SignUpPage = () => {
     },
     onSuccess:()=>{
       toast.success("Account created successfully");
+    queryClient.invalidateQueries({ queryKey: ["authUser"] }); // ✅ Refetch user
+    navigate("/"); // ✅ Redirect to homepage
     }
   });
 

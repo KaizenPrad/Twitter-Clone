@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 import XSvg from "../../../components/svgs/X";
 
 import { MdOutlineMail } from "react-icons/md";
@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { apiFetch } from "../../../lib/api";
 const LoginPage = () => {
+	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		username: "",
 		password: "",
@@ -38,6 +39,7 @@ const LoginPage = () => {
 	onSuccess: ()=>{
 		toast.success("Login successful! ");
 		queryClient.invalidateQueries({ queryKey: ["authUser"] });
+		navigate("/"); // ✅ This redirects to HomePage after login
 }});
 
 	const handleSubmit = (e) => {
