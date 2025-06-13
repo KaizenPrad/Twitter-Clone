@@ -27,12 +27,23 @@ const __dirname = path.resolve();
 app.use(express.json({ limit: '10mb' })); // default is 100kb
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://twitter-clone-main-ibbb.onrender.com'
+];
 
 app.use(cookieParser());
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000"// Update with your frontend URL
-}
-))
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 //
 app.get("/",(req,res)=>{
   res.send("Hello form Server");
