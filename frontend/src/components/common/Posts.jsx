@@ -3,6 +3,7 @@ import PostSkeleton from "../skeletons/PostSkeleton";
 // import { POSTS } from "../../utils/db/dummy";
 import {useQuery} from "@tanstack/react-query";
 import { useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 const Posts = ({feedType, username, userId}) => {
 	// const isLoading = false;
 
@@ -27,7 +28,7 @@ const Posts = ({feedType, username, userId}) => {
 		queryKey: ["posts"],
 		queryFn: async () => {
 			 try {
-				const res = await fetch(POST_ENDPOINT);
+				const res = await apiFetch(POST_ENDPOINT);
 				const data = await res.json();
 				
 				if(!res.ok){

@@ -6,13 +6,14 @@ import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "../../lib/api";
 
 const Sidebar = () => {
 	const queryClient = useQueryClient();
 	const {mutate:logout, isPending, isError, error}= useMutation({
 		mutationFn: async()=>{
 			try {
-				const res = await fetch("/api/auth/logout",{
+				const res = await apiFetch("/api/auth/logout",{
 					method: "POST",
 				})
 				const data = await res.json();
@@ -31,7 +32,7 @@ const Sidebar = () => {
 	const { data: authUser, isLoading } = useQuery({
 		queryKey: ["authUser"],
 		queryFn: async () => {
-		  const res = await fetch("/api/auth/me");
+		  const res = await apiFetch("/api/auth/me");
 		  const data = await res.json();
 		  if (!res.ok) throw new Error(data.error || "Failed to fetch user");
 		  return data;

@@ -15,6 +15,7 @@ import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/re
 import { formatMemberSinceDate } from "../../utils/date";
 import toast from "react-hot-toast";
 import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
+import { apiFetch } from "../../lib/api";
 // import { useQuery } from "@tanstack/react-query";
 
 const ProfilePage = () => {
@@ -33,7 +34,7 @@ const ProfilePage = () => {
 		queryKey: ["authUser"],
 		queryFn: async () => {
 			try {
-				const res = await fetch("/api/auth/me");
+				const res = await apiFetch("/api/auth/me");
 				const data = await res.json();
 				if (!res.ok) throw new Error(data.error || "Something went wrong");
 				return data;
@@ -45,7 +46,7 @@ const ProfilePage = () => {
 		queryKey: ["userProfile"],
 		queryFn: async () => {
 			try {
-				const res = await fetch(`/api/users/profile/${username}`);
+				const res = await apiFetch(`/api/users/profile/${username}`);
 				const data = await res.json();
 				if (!res.ok) throw new Error(data.message || "Something went wrong");
 				return data;

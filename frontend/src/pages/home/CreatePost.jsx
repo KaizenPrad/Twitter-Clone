@@ -4,18 +4,19 @@ import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import { toast } from "react-hot-toast";
+import { apiFetch } from "../../lib/api";
 const CreatePost = () => {
 	const [text, setText] = useState("");
 	const [img, setImg] = useState(null);
 	const imgRef = useRef(null);
 	
-	const {data:authUser} = useQuery({queryKey: ['authUser'], queryFn:()=>fetch("/api/auth/me").then(res=>res.json())} ); 
+	const {data:authUser} = useQuery({queryKey: ['authUser'], queryFn:()=>apiFetch("/api/auth/me").then(res=>res.json())} ); 
 	const queryClient = useQueryClient();
 
 	const {mutate:createPost, isPending, isError, error}=useMutation({
 		mutationFn: async ({text, img}) => {
 			try {
-				const res = await fetch("/api/posts/create",{
+				const res = await apiFetch("/api/posts/create",{
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",

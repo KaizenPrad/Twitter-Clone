@@ -3,13 +3,14 @@ import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import useFollow from "../../hooks/useFollow";
 import LoadingSpinner from "./LoadingSpinner";
+import { apiFetch } from "../../lib/api";
 const RightPanel = () => {
 
 	const {data : suggestedUsers, isLoading}= useQuery({
 		queryKey: ['suggestedUsers'],
 		queryFn : async () => {
 			try {
-				const res = await fetch("/api/users/suggested", {})
+				const res = await apiFetch("/api/users/suggested", {})
 				const data = await res.json();
 				if (!res.ok) {
 					throw new Error(data.message || "Failed to fetch suggested users");
