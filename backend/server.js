@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://twitter-clone-main-ibbb.onrender.com'
+  'https://twitter-clone-tan-two.vercel.app'
 ];
 
 app.use(cookieParser());
