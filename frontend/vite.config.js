@@ -22,8 +22,8 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'https://twitter-clone-main-ibbb.onrender.com',
+      '/https://twitter-clone-main-ibbb.onrender.com/': {
+        target: 'http://localhost:4000',
         changeOrigin: true,
       }
     }
