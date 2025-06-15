@@ -9,7 +9,7 @@ import userRoutes from "./routes/user.route.js";
 import postRoutes from "./routes/post.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 
-import connectMongoDB from "./db/connectMongoDb.js";
+import connectMongoDB from "./db/connectMongoDB.js";
 
 dotenv.config();
 
