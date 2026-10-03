@@ -10,7 +10,8 @@ Sentinel scores 0–100 → correlates 2–3 signals → Detection → auto-Inci
 | Failed logins x3+/min (same IP+username) | `BRUTE_FORCE_BURST` | AUTH / HIGH | `backend/controllers/auth.controller.js` → `login` |
 | Off-hours login success (1–5am) | `OFF_HOURS_LOGIN` | AUTH / MEDIUM | `auth.controller.js` → `login` |
 | New signup | `NEW_ACCOUNT` | AUTH / INFO | `auth.controller.js` → `signup` |
-| Post/comment with link | `PHISH_CLICK` | WEB / MED–HIGH | `post.controller.js` → `createPost`, `commentOnPost` |
+| Post/comment with plain link | `PHISH_CLICK` | WEB / MEDIUM | `post.controller.js` → `createPost`, `commentOnPost` |
+| Post/comment with credential-harvesting link (verify/suspended/urgent/password/bank/… keywords) | `PHISH_CLICK` + `CREDENTIAL_FORM_POST` in ONE batch → PHISHING detection ~60 | WEB / HIGH | `post.controller.js` (pair passes Sentinel's ≥2-signals / ≥55 rule) |
 | First-seen domain in post | `SUSPICIOUS_DNS` | NETWORK / MEDIUM | `post.controller.js` → `createPost` |
 | 5+ posts/min (spam) | `BEACONING` | NETWORK / MEDIUM | `post.controller.js` |
 | 10+ likes/min (bot) | `BEACONING` | NETWORK / MEDIUM | `post.controller.js` → `likeUnlikePost` |

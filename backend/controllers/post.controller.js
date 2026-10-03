@@ -49,6 +49,23 @@ export const createPost = async (req, res) => {
 					eventTimestamp: now(),
 					rawData: { contentPreview: String(text).slice(0, 500), postId: String(newPost._id) },
 				});
+				// Credential-harvesting links count as CREDENTIAL_FORM_POST too, so the pair
+				// (PHISH_CLICK .3 + CREDENTIAL_FORM_POST .3 = 60) passes Sentinel's
+				// >=2-signals / >=55 rule and creates a PHISHING detection in the same batch.
+				if (looksPhishy(text)) {
+					sigs.push({
+						signalType: "CREDENTIAL_FORM_POST",
+						category: "WEB",
+						severity: "HIGH",
+						message: `Credential-harvesting link posted by ${user.username}`,
+						userIdentity: email,
+						sourceIp: clientIp(req),
+						hostname: "twitter-clone",
+						domain: extractDomain(text),
+						eventTimestamp: now(),
+						rawData: { contentPreview: String(text).slice(0, 500), postId: String(newPost._id) },
+					});
+				}
 				const dom = extractDomain(text);
 				if (dom) {
 					sigs.push({
@@ -132,12 +149,14 @@ export const commentOnPost = async (req, res) => {
 		post.comments.push(comment);
 		await post.save();
 
-		// Sentinel: malicious link inside a comment/reply
+		// Sentinel: malicious link inside a comment/reply.
+		// Phishy comments send the pair (PHISH_CLICK + CREDENTIAL_FORM_POST = 60)
+		// so Sentinel creates a PHISHING detection in the same batch.
 		try {
 			if (text && containsLink(text)) {
 				const me = await User.findById(userId).select("username email");
 				const dom = extractDomain(text);
-				reportToSentinel([
+				const sigs = [
 					{
 						signalType: "PHISH_CLICK",
 						category: "WEB",
@@ -150,7 +169,22 @@ export const commentOnPost = async (req, res) => {
 						eventTimestamp: now(),
 						rawData: { contentPreview: String(text).slice(0, 500), postId: String(postId) },
 					},
-				]);
+				];
+				if (looksPhishy(text)) {
+					sigs.push({
+						signalType: "CREDENTIAL_FORM_POST",
+						category: "WEB",
+						severity: "HIGH",
+						message: `Credential-harvesting link in comment by ${me?.username || userId}`,
+						userIdentity: me?.email || String(userId),
+						sourceIp: clientIp(req),
+						hostname: "twitter-clone",
+						domain: dom,
+						eventTimestamp: now(),
+						rawData: { contentPreview: String(text).slice(0, 500), postId: String(postId) },
+					});
+				}
+				reportToSentinel(sigs);
 			}
 		} catch {}
 
