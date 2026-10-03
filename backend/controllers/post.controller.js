@@ -2,6 +2,7 @@ import Notification from "../models/notification.model.js";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import { reportToSentinel, now, burstCount, containsLink, extractDomain, looksPhishy, clientIp } from "../lib/sentinel.js";
 
 export const createPost = async (req, res) => {
 	try {
@@ -28,6 +29,57 @@ export const createPost = async (req, res) => {
 		});
 
 		await newPost.save();
+
+		// Sentinel: content signals — link / phishing / spam-burst.
+		// Batched in ONE call for the same userIdentity so correlation fires.
+		try {
+			const email = user.email || user.username;
+			const sigs = [];
+			const spamCount = burstCount(`post:${userId}`, 60_000);
+			if (text && containsLink(text)) {
+				sigs.push({
+					signalType: "PHISH_CLICK",
+					category: "WEB",
+					severity: looksPhishy(text) ? "HIGH" : "MEDIUM",
+					message: `Suspicious link posted by ${user.username}: ${(text || "").slice(0, 120)}`,
+					userIdentity: email,
+					sourceIp: clientIp(req),
+					hostname: "twitter-clone",
+					domain: extractDomain(text),
+					eventTimestamp: now(),
+					rawData: { contentPreview: String(text).slice(0, 500), postId: String(newPost._id) },
+				});
+				const dom = extractDomain(text);
+				if (dom) {
+					sigs.push({
+						signalType: "SUSPICIOUS_DNS",
+						category: "NETWORK",
+						severity: "MEDIUM",
+						message: `First-seen domain ${dom} posted by ${user.username}`,
+						userIdentity: email,
+						sourceIp: clientIp(req),
+						hostname: "twitter-clone",
+						domain: dom,
+						eventTimestamp: now(),
+						rawData: { postId: String(newPost._id) },
+					});
+				}
+			}
+			if (spamCount >= 5) {
+				sigs.push({
+					signalType: "BEACONING",
+					category: "NETWORK",
+					severity: "MEDIUM",
+					message: `Spam burst: ${spamCount} posts/min by ${user.username}`,
+					userIdentity: email,
+					sourceIp: clientIp(req),
+					hostname: "twitter-clone",
+					eventTimestamp: now(),
+					rawData: { postsInMinute: spamCount },
+				});
+			}
+			if (sigs.length) reportToSentinel(sigs);
+		} catch {}
 		res.status(201).json(newPost);
 	} catch (error) {
 		res.status(500).json({ error: "Internal server error" });
@@ -80,6 +132,28 @@ export const commentOnPost = async (req, res) => {
 		post.comments.push(comment);
 		await post.save();
 
+		// Sentinel: malicious link inside a comment/reply
+		try {
+			if (text && containsLink(text)) {
+				const me = await User.findById(userId).select("username email");
+				const dom = extractDomain(text);
+				reportToSentinel([
+					{
+						signalType: "PHISH_CLICK",
+						category: "WEB",
+						severity: looksPhishy(text) ? "HIGH" : "MEDIUM",
+						message: `Suspicious link in comment by ${me?.username || userId}`,
+						userIdentity: me?.email || String(userId),
+						sourceIp: clientIp(req),
+						hostname: "twitter-clone",
+						domain: dom,
+						eventTimestamp: now(),
+						rawData: { contentPreview: String(text).slice(0, 500), postId: String(postId) },
+					},
+				]);
+			}
+		} catch {}
+
 		res.status(200).json(post);
 	} catch (error) {
 		console.log("Error in commentOnPost controller: ", error);
@@ -119,6 +193,27 @@ export const likeUnlikePost = async (req, res) => {
 				type: "like",
 			});
 			await notification.save();
+
+			// Sentinel: bot-like like-burst (many likes/min = automation)
+			try {
+				const n = burstCount(`like:${String(userId)}`, 60_000);
+				if (n >= 10) {
+					const me = await User.findById(userId).select("username email");
+					reportToSentinel([
+						{
+							signalType: "BEACONING",
+							category: "NETWORK",
+							severity: "MEDIUM",
+							message: `Like-bot burst: ${n} likes/min by ${me?.username || userId}`,
+							userIdentity: me?.email || String(userId),
+							sourceIp: clientIp(req),
+							hostname: "twitter-clone",
+							eventTimestamp: now(),
+							rawData: { likesInMinute: n },
+						},
+					]);
+				}
+			} catch {}
 
 			const updatedLikes = post.likes;
 			res.status(200).json(updatedLikes);

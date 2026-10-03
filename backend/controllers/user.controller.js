@@ -4,6 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 // models
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
+import { reportToSentinel, now, burstCount, clientIp } from "../lib/sentinel.js";
 
 export const getUserProfile = async (req, res) => {
 	const { username } = req.params;
@@ -51,6 +52,26 @@ export const followUnfollowUser = async (req, res) => {
 			});
 
 			await newNotification.save();
+
+			// Sentinel: follow-bot burst (mass follow/unfollow = spam / amplification abuse)
+			try {
+				const n = burstCount(`follow:${String(req.user._id)}`, 60_000);
+				if (n >= 8) {
+					reportToSentinel([
+						{
+							signalType: "BEACONING",
+							category: "NETWORK",
+							severity: "MEDIUM",
+							message: `Follow-bot burst: ${n} follows/min by ${currentUser.username}`,
+							userIdentity: currentUser.email || currentUser.username,
+							sourceIp: clientIp(req),
+							hostname: "twitter-clone",
+							eventTimestamp: now(),
+							rawData: { followsInMinute: n },
+						},
+					]);
+				}
+			} catch {}
 
 			res.status(200).json({ message: "User followed successfully" });
 		}
@@ -111,6 +132,23 @@ export const updateUser = async (req, res) => {
 
 			const salt = await bcrypt.genSalt(10);
 			user.password = await bcrypt.hash(newPassword, salt);
+
+			// Sentinel: credential change = possible takeover (priv-escalation family)
+			try {
+				reportToSentinel([
+					{
+						signalType: "PRIV_ESCALATION",
+						category: "AUTH",
+						severity: "MEDIUM",
+						message: `Password changed for ${user.username}`,
+						userIdentity: user.email || user.username,
+						sourceIp: clientIp(req),
+						hostname: "twitter-clone",
+						eventTimestamp: now(),
+						rawData: { username: user.username },
+					},
+				]);
+			} catch {}
 		}
 
 		if (profileImg) {
